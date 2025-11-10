@@ -17,7 +17,10 @@ function weightForType(type: string) {
   }
 }
 
-export async function getRecommendationsForUser(userId: string, options: RecommendationOptions = {}) {
+export async function getRecommendationsForUser(
+  userId: string,
+  options: RecommendationOptions = {}
+) {
   const { limit = 9 } = options;
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return [] as IProduct[];
@@ -25,7 +28,7 @@ export async function getRecommendationsForUser(userId: string, options: Recomme
 
   const focusInteractions = await Interaction.find({
     user: userId,
-    type: { $in: ["like", "purchase"] }
+    type: { $in: ["like", "purchase"] },
   })
     .lean()
     .exec();
@@ -38,7 +41,7 @@ export async function getRecommendationsForUser(userId: string, options: Recomme
   const similarInteractions = await Interaction.find({
     product: { $in: Array.from(focusProductIds) },
     user: { $ne: userId },
-    type: { $in: ["like", "purchase"] }
+    type: { $in: ["like", "purchase"] },
   })
     .lean()
     .exec();
@@ -61,7 +64,7 @@ export async function getRecommendationsForUser(userId: string, options: Recomme
 
   const candidateInteractions = await Interaction.find({
     user: { $in: topSimilarUsers },
-    type: { $in: ["like", "purchase", "view"] }
+    type: { $in: ["like", "purchase", "view"] },
   })
     .lean()
     .exec();
@@ -92,7 +95,7 @@ export async function getRecommendationsForUser(userId: string, options: Recomme
   const productMap = new Map(products.map((product) => [product._id.toString(), product]));
   return sortedProducts
     .map((id) => productMap.get(id))
-    .filter((product): product is IProduct => Boolean(product));
+    .filter((product) => product !== undefined) as unknown as IProduct[];
 }
 
 async function getTrendingProducts(limit: number) {
@@ -101,11 +104,11 @@ async function getTrendingProducts(limit: number) {
     {
       $group: {
         _id: "$product",
-        score: { $sum: { $cond: [{ $eq: ["$type", "purchase"] }, 3, 2] } }
-      }
+        score: { $sum: { $cond: [{ $eq: ["$type", "purchase"] }, 3, 2] } },
+      },
     },
     { $sort: { score: -1 } },
-    { $limit: limit }
+    { $limit: limit },
   ]);
 
   const ids = top.map((item) => item._id);
@@ -117,5 +120,5 @@ async function getTrendingProducts(limit: number) {
   const productMap = new Map(products.map((product) => [product._id.toString(), product]));
   return ids
     .map((id) => productMap.get(id.toString()))
-    .filter((product): product is IProduct => Boolean(product));
+    .filter((product) => product !== undefined) as unknown as IProduct[];
 }
