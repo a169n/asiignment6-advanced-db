@@ -18,7 +18,6 @@ export interface Product {
 }
 
 export interface InteractionPayload {
-  userId: string;
   productId: string;
   type: "view" | "like" | "purchase";
 }

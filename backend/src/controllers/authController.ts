@@ -18,13 +18,18 @@ export const register = async (req: Request, res: Response) => {
 
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({ username, email, password: hashed });
+  const token = jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: "7d" });
   res.status(201).json({
-    _id: user._id,
-    username: user.username,
-    email: user.email,
-    purchaseHistory: user.purchaseHistory,
-    likedProducts: user.likedProducts,
-    viewedProducts: user.viewedProducts
+    token,
+    user: {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      bio: user.bio,
+      purchaseHistory: user.purchaseHistory,
+      likedProducts: user.likedProducts,
+      viewedProducts: user.viewedProducts
+    }
   });
 };
 
@@ -51,6 +56,7 @@ export const login = async (req: Request, res: Response) => {
       _id: user._id,
       username: user.username,
       email: user.email,
+      bio: user.bio,
       purchaseHistory: user.purchaseHistory,
       likedProducts: user.likedProducts,
       viewedProducts: user.viewedProducts
