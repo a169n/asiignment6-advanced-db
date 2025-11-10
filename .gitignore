@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log*
+yarn-error.log
+.pnp.cjs
+.pnp.loader.mjs
+.env
+backend/dist
+frontend/.next
+frontend/out
+.DS_Store
