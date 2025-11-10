@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { findProducts, searchProducts } from "@/services/productService";
+import { AuthenticatedRequest } from "@/middleware/authMiddleware";
 
 function parseNumber(value?: string | null) {
   if (!value) return undefined;
@@ -7,7 +8,7 @@ function parseNumber(value?: string | null) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-export const getProducts = async (req: Request, res: Response) => {
+export const getProducts = async (req: AuthenticatedRequest, res: Response) => {
   const { q, category, minPrice, maxPrice } = req.query;
   const filters = {
     q: typeof q === "string" ? q : undefined,
@@ -19,7 +20,7 @@ export const getProducts = async (req: Request, res: Response) => {
   res.json(result);
 };
 
-export const searchProductsController = async (req: Request, res: Response) => {
+export const searchProductsController = async (req: AuthenticatedRequest, res: Response) => {
   const { q, category, minPrice, maxPrice } = req.query;
   const filters = {
     q: typeof q === "string" ? q : undefined,

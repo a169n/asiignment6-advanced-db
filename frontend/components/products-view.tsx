@@ -2,10 +2,11 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { useProducts } from "@/hooks/use-products";
+import { useProducts, useRecommendations } from "@/hooks/use-products";
 import { ProductCard } from "@/components/product-card";
 import { SearchFilters } from "@/components/search-filters";
 import { ProductRecommendations } from "@/components/product-recommendations";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 
 function parseNumber(value: string | null) {
   if (!value) return undefined;
@@ -15,6 +16,7 @@ function parseNumber(value: string | null) {
 
 export function ProductsView() {
   const params = useSearchParams();
+  const { user, loading: authLoading } = useAuthGuard();
   const filters = useMemo(
     () => ({
       q: params.get("q") ?? undefined,
@@ -24,9 +26,19 @@ export function ProductsView() {
     }),
     [params]
   );
-  const { data, isLoading } = useProducts(filters);
+  const { data, isLoading, isError, error } = useProducts(filters, !authLoading && Boolean(user));
   const products = data?.products ?? [];
-  const userId = params.get("userId") ?? undefined;
+  const {
+    data: recommendationsData,
+    isFetching: isFetchingRecommendations,
+    isError: isRecommendationsError,
+    error: recommendationsError,
+  } = useRecommendations(Boolean(user) && !authLoading);
+  const recommendations = recommendationsData?.recommendations ?? [];
+  const recommendationsErrorMessage =
+    isRecommendationsError && recommendationsError instanceof Error
+      ? recommendationsError.message
+      : null;
 
   return (
     <div className="space-y-8">
@@ -36,19 +48,25 @@ export function ProductsView() {
         <SearchFilters categories={products.map((product) => product.category)} />
       </section>
 
-      {isLoading ? (
+      {authLoading || isLoading ? (
         <p>Loading products...</p>
+      ) : isError ? (
+        <p className="text-sm text-red-400">{error instanceof Error ? error.message : "Failed to load products"}</p>
       ) : products.length ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <ProductCard key={product._id} product={product} userId={userId} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       ) : (
         <p className="text-slate-400">No products found for your search.</p>
       )}
 
-      <ProductRecommendations userId={userId} />
+      <ProductRecommendations
+        isLoading={authLoading || isFetchingRecommendations}
+        recommendations={recommendations}
+        errorMessage={recommendationsErrorMessage ?? undefined}
+      />
     </div>
   );
 }

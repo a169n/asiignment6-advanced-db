@@ -1,73 +1,72 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useUpdateProfile, useUsers } from "@/hooks/use-products";
-import type { User } from "@/types";
+import { useAuth } from "@/components/auth/auth-context";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { api } from "@/lib/utils";
 
 export function ProfileForm() {
-  const { data: users } = useUsers();
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const selectedUser = useMemo(() => users?.find((user) => user._id === selectedUserId), [
-    users,
-    selectedUserId
-  ]);
+  const { user, loading } = useAuthGuard();
+  const { refresh } = useAuth();
   const [bio, setBio] = useState("");
   const [likedProducts, setLikedProducts] = useState("");
   const [purchaseHistory, setPurchaseHistory] = useState("");
-  const updateProfile = useUpdateProfile(selectedUserId || undefined);
-  const [message, setMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setBio(user.bio ?? "");
+      setLikedProducts((user.likedProducts ?? []).join(", "));
+      setPurchaseHistory((user.purchaseHistory ?? []).join(", "));
+    }
+  }, [user]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedUserId) return;
-    setMessage(null);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    if (!user) {
+      return;
+    }
     try {
-      await updateProfile.mutateAsync({
+      setSubmitting(true);
+      await api.put(`/api/users/${user._id}`, {
         bio,
-        likedProducts: likedProducts.split(",").map((item) => item.trim()).filter(Boolean),
-        purchaseHistory: purchaseHistory.split(",").map((item) => item.trim()).filter(Boolean)
-      } as Partial<User>);
-      setMessage("Profile updated successfully!");
+        likedProducts: likedProducts
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        purchaseHistory: purchaseHistory
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      });
+      await refresh();
+      setSuccessMessage("Profile updated successfully!");
     } catch (error) {
       console.error(error);
+      setErrorMessage("Failed to update profile. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-  };
-
-  const handleUserSelection = (value: string) => {
-    setSelectedUserId(value);
-    const user = users?.find((item) => item._id === value);
-    setBio(user?.bio ?? "");
-    setLikedProducts((user?.likedProducts ?? []).join(", "));
-    setPurchaseHistory((user?.purchaseHistory ?? []).join(", "));
   };
 
   return (
     <Card className="max-w-3xl">
       <CardHeader>
         <CardTitle>Profile management</CardTitle>
-        <CardDescription>Select a user to update their profile details.</CardDescription>
+        <CardDescription>Update your profile details to personalize recommendations.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <label className="space-y-2 text-sm">
-          <span>Select user</span>
-          <select
-            value={selectedUserId}
-            onChange={(event) => handleUserSelection(event.target.value)}
-            className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-          >
-            <option value="">Select a user</option>
-            {users?.map((user) => (
-              <option key={user._id} value={user._id}>
-                {user.username}
-              </option>
-            ))}
-          </select>
-        </label>
-        {selectedUser ? (
+        {loading ? (
+          <p className="text-sm text-slate-400">Loading your profile...</p>
+        ) : user ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="space-y-2 text-sm">
               <span>Bio</span>
@@ -81,15 +80,16 @@ export function ProfileForm() {
               <span>Purchase history (comma separated product IDs)</span>
               <Input value={purchaseHistory} onChange={(event) => setPurchaseHistory(event.target.value)} />
             </label>
-            {message && <p className="text-sm text-emerald-400">{message}</p>}
+            {successMessage && <p className="text-sm text-emerald-400">{successMessage}</p>}
+            {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
             <CardFooter className="px-0">
-              <Button type="submit" disabled={updateProfile.isPending}>
-                {updateProfile.isPending ? "Saving..." : "Save profile"}
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : "Save profile"}
               </Button>
             </CardFooter>
           </form>
         ) : (
-          <p className="text-sm text-slate-400">Choose a user to edit their profile.</p>
+          <p className="text-sm text-slate-400">Log in to edit your profile.</p>
         )}
       </CardContent>
     </Card>

@@ -1,25 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRegisterUser } from "@/hooks/use-products";
+import { useAuth } from "@/components/auth/auth-context";
 
 export function UserRegistrationForm() {
-  const registerUser = useRegisterUser();
+  const router = useRouter();
+  const { register, authenticating } = useAuth();
   const [form, setForm] = useState({ username: "", email: "", password: "" });
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSuccessMessage(null);
+    setMessage(null);
+    setErrorMessage(null);
     try {
-      await registerUser.mutateAsync(form);
-      setSuccessMessage("Registration successful! You can now log in.");
-      setForm({ username: "", email: "", password: "" });
+      await register(form);
+      setMessage("Registration successful! Redirecting to your dashboard...");
+      router.replace("/");
     } catch (error) {
       console.error(error);
+      setErrorMessage(error instanceof Error ? error.message : "Registration failed");
     }
   };
 
@@ -57,11 +62,12 @@ export function UserRegistrationForm() {
               onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
             />
           </label>
-          {successMessage && <p className="text-sm text-emerald-400">{successMessage}</p>}
+          {message && <p className="text-sm text-emerald-400">{message}</p>}
+          {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
         </CardContent>
         <CardFooter>
-          <Button type="submit" disabled={registerUser.isPending}>
-            {registerUser.isPending ? "Submitting..." : "Register"}
+          <Button type="submit" disabled={authenticating}>
+            {authenticating ? "Submitting..." : "Register"}
           </Button>
         </CardFooter>
       </form>

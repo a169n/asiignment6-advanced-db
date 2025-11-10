@@ -1,17 +1,18 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import mongoose from "mongoose";
 import { Interaction, type InteractionType } from "@/models/Interaction";
 import { User } from "@/models/User";
+import { AuthenticatedRequest } from "@/middleware/authMiddleware";
 
-export const recordInteraction = async (req: Request, res: Response) => {
-  const { userId, productId, type } = req.body as {
-    userId?: string;
+export const recordInteraction = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.userId;
+  const { productId, type } = req.body as {
     productId?: string;
     type?: InteractionType;
   };
 
   if (!userId || !productId || !type) {
-    return res.status(400).json({ message: "userId, productId and type are required" });
+    return res.status(400).json({ message: "productId and type are required" });
   }
 
   if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(productId)) {

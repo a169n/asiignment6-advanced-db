@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { seedDatabase } from "@/utils/seedData";
 
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/advanced-db-commerce";
 
@@ -36,6 +37,8 @@ export async function connectDatabase() {
     product: 1,
     type: 1
   });
+
+  await seedDatabase();
 
   return mongoose.connection;
 }

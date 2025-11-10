@@ -1,12 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/utils";
-import type {
-  InteractionPayload,
-  Product,
-  RecommendationResponse,
-  SearchFilters,
-  User
-} from "@/types";
+import type { InteractionPayload, Product, RecommendationResponse, SearchFilters } from "@/types";
 
 type ProductsResponse = {
   products: Product[];
@@ -14,9 +8,10 @@ type ProductsResponse = {
   filters: SearchFilters;
 };
 
-export function useProducts(filters: SearchFilters) {
+export function useProducts(filters: SearchFilters, enabled = true) {
   return useQuery({
     queryKey: ["products", filters],
+    enabled,
     queryFn: () => {
       const params = new URLSearchParams();
       if (filters.q) params.append("q", filters.q);
@@ -29,44 +24,11 @@ export function useProducts(filters: SearchFilters) {
   });
 }
 
-export function useRecommendations(userId?: string) {
+export function useRecommendations(enabled: boolean) {
   return useQuery({
-    queryKey: ["recommendations", userId],
-    enabled: Boolean(userId),
-    queryFn: () => api.get<RecommendationResponse>(`/api/recommendations?userId=${userId}`)
-  });
-}
-
-export function useUsers() {
-  return useQuery({
-    queryKey: ["users"],
-    queryFn: () => api.get<User[]>("/api/users")
-  });
-}
-
-export function useRegisterUser() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (data: { username: string; email: string; password: string }) =>
-      api.post<User>("/api/register", data),
-    onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["users"] });
-    }
-  });
-}
-
-export function useUpdateProfile(userId?: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (data: Partial<User>) => {
-      if (!userId) {
-        throw new Error("User ID is required to update a profile");
-      }
-      return api.put<User>(`/api/users/${userId}`, data);
-    },
-    onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["users"] });
-    }
+    queryKey: ["recommendations"],
+    enabled,
+    queryFn: () => api.get<RecommendationResponse>("/api/recommendations")
   });
 }
 
