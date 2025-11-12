@@ -19,22 +19,34 @@ export const recordInteraction = async (req: AuthenticatedRequest, res: Response
     return res.status(400).json({ message: "Invalid identifiers" });
   }
 
-  await Interaction.create({ user: userId, product: productId, type });
-
-  const addToSet: Record<string, unknown> = {};
-  if (type === "view") {
-    addToSet.viewedProducts = productId;
-  }
   if (type === "like") {
-    addToSet.likedProducts = productId;
+    const existing = await Interaction.findOne({ user: userId, product: productId, type: "like" }).lean();
+    if (existing) {
+      await Interaction.deleteOne({ _id: existing._id });
+      await User.findByIdAndUpdate(userId, { $pull: { likedProducts: productId } });
+      return res.status(200).json({ message: "Like removed", liked: false });
+    }
+
+    const created = await Interaction.create({ user: userId, product: productId, type: "like" });
+    await User.findByIdAndUpdate(userId, { $addToSet: { likedProducts: productId } });
+    return res.status(201).json({ message: "Like saved", liked: true, interactionId: created._id });
   }
+
+  if (type === "view") {
+    await Interaction.updateOne(
+      { user: userId, product: productId, type: "view" },
+      { $setOnInsert: { createdAt: new Date() }, $set: { user: userId, product: productId, type: "view" } },
+      { upsert: true }
+    );
+    await User.findByIdAndUpdate(userId, { $addToSet: { viewedProducts: productId } });
+    return res.status(200).json({ message: "View recorded" });
+  }
+
   if (type === "purchase") {
-    addToSet.purchaseHistory = productId;
+    const interaction = await Interaction.create({ user: userId, product: productId, type: "purchase" });
+    await User.findByIdAndUpdate(userId, { $addToSet: { purchaseHistory: productId } });
+    return res.status(201).json({ message: "Purchase recorded", interactionId: interaction._id });
   }
 
-  if (Object.keys(addToSet).length) {
-    await User.findByIdAndUpdate(userId, { $addToSet: addToSet });
-  }
-
-  res.status(201).json({ message: "Interaction recorded" });
+  return res.status(400).json({ message: "Unsupported interaction type" });
 };

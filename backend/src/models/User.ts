@@ -8,6 +8,11 @@ export interface IUser extends Document {
   purchaseHistory: mongoose.Types.ObjectId[];
   likedProducts: mongoose.Types.ObjectId[];
   viewedProducts: mongoose.Types.ObjectId[];
+  role: "user" | "admin";
+  notificationPreferences?: {
+    productAlerts?: boolean;
+    orderUpdates?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,7 +25,12 @@ const userSchema = new Schema<IUser>(
     bio: { type: String },
     purchaseHistory: [{ type: Schema.Types.ObjectId, ref: "Product" }],
     likedProducts: [{ type: Schema.Types.ObjectId, ref: "Product" }],
-    viewedProducts: [{ type: Schema.Types.ObjectId, ref: "Product" }]
+    viewedProducts: [{ type: Schema.Types.ObjectId, ref: "Product" }],
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+    notificationPreferences: {
+      productAlerts: { type: Boolean, default: true },
+      orderUpdates: { type: Boolean, default: true }
+    }
   },
   { timestamps: true }
 );

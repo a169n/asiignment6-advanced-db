@@ -1,142 +1,127 @@
+import { readFile } from "fs/promises";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { Product } from "@/models/Product";
 import { User } from "@/models/User";
 import { Interaction, type InteractionType } from "@/models/Interaction";
+import { appConfig } from "@/config/appConfig";
 
-const defaultProducts = [
-  {
-    productName: "Aurora Noise-Cancelling Headphones",
-    description: "Wireless over-ear headphones with adaptive noise cancellation and 30-hour battery life.",
-    category: "Electronics",
-    price: 199.99,
-    tags: ["audio", "wireless", "premium"],
-  },
-  {
-    productName: "Summit Trail Running Shoes",
-    description: "Lightweight trail runners designed for stability on uneven surfaces and wet conditions.",
-    category: "Outdoors",
-    price: 149.0,
-    tags: ["footwear", "athletic", "water-resistant"],
-  },
-  {
-    productName: "Harbor Pour-Over Coffee Maker",
-    description: "Glass pour-over coffee maker with reusable stainless-steel filter for rich flavor extraction.",
-    category: "Home",
-    price: 59.5,
-    tags: ["kitchen", "coffee", "eco-friendly"],
-  },
-  {
-    productName: "Cascade Smart Water Bottle",
-    description: "Insulated bottle that tracks hydration levels and syncs with your smartphone.",
-    category: "Wellness",
-    price: 89.99,
-    tags: ["hydration", "smart", "health"],
-  },
-  {
-    productName: "Lumen Desk Lamp",
-    description: "Adjustable LED desk lamp with ambient light sensor and wireless charging pad.",
-    category: "Office",
-    price: 129.99,
-    tags: ["lighting", "smart", "workspace"],
-  },
-];
+interface ProductSeed {
+  productName: string;
+  description: string;
+  category: string;
+  price: number;
+  tags?: string[];
+  imageUrl: string;
+  imageAlt?: string;
+  rating?: number;
+  popularity?: number;
+}
 
-const defaultUsers = [
-  {
-    username: "ava",
-    email: "ava@example.com",
-    password: "Password123!",
-    bio: "Product designer exploring the latest in smart home tech.",
-    likedProducts: [0, 3, 4],
-    purchaseHistory: [0, 2],
-  },
-  {
-    username: "marco",
-    email: "marco@example.com",
-    password: "Password123!",
-    bio: "Runner and coffee enthusiast always searching for performance gear.",
-    likedProducts: [1, 2],
-    purchaseHistory: [1],
-  },
-  {
-    username: "tanya",
-    email: "tanya@example.com",
-    password: "Password123!",
-    bio: "Operations manager keeping the workspace modern and comfortable.",
-    likedProducts: [3, 4],
-    purchaseHistory: [4],
-  },
-];
+interface UserSeed {
+  username: string;
+  email: string;
+  password: string;
+  bio?: string;
+  role?: "user" | "admin";
+  likedProducts?: number[];
+  purchaseHistory?: number[];
+  viewedProducts?: number[];
+  notificationPreferences?: {
+    productAlerts?: boolean;
+    orderUpdates?: boolean;
+  };
+}
 
-async function seedProducts(): Promise<string[]> {
-  const count = await Product.countDocuments();
-  if (count > 0) {
-    const existing = await Product.find({}, { _id: 1 }).lean();
-    return existing.map((product) => product._id.toString());
+async function loadSeedFile<T>(filename: string): Promise<T> {
+  const fileUrl = new URL(`../../seed/${filename}`, import.meta.url);
+  const buffer = await readFile(fileUrl, "utf-8");
+  return JSON.parse(buffer) as T;
+}
+
+async function seedProducts(): Promise<mongoose.Types.ObjectId[]> {
+  const products = await loadSeedFile<ProductSeed[]>("products.json");
+  const ids: mongoose.Types.ObjectId[] = [];
+
+  for (const product of products) {
+    const upserted = await Product.findOneAndUpdate(
+      { productName: product.productName },
+      {
+        ...product,
+        imageAlt: product.imageAlt || appConfig.defaultImageAlt
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    ids.push(upserted._id as mongoose.Types.ObjectId);
   }
 
-  const inserted = await Product.insertMany(defaultProducts);
-  return inserted.map((product) => (product._id as mongoose.Types.ObjectId).toString());
+  return ids;
 }
 
 interface SeededUserSummary {
-  _id: string;
-  likedProducts: string[];
-  purchaseHistory: string[];
+  _id: mongoose.Types.ObjectId;
+  likedProducts: mongoose.Types.ObjectId[];
+  purchaseHistory: mongoose.Types.ObjectId[];
 }
 
-async function seedUsers(productIds: string[]): Promise<SeededUserSummary[]> {
-  const count = await User.countDocuments();
-  if (count > 0) {
-    const existing = await User.find({}, { likedProducts: 1, purchaseHistory: 1 })
-      .lean()
-      .exec();
-    return existing.map((user) => ({
-      _id: user._id.toString(),
-      likedProducts: (user.likedProducts ?? []).map((product) => product.toString()),
-      purchaseHistory: (user.purchaseHistory ?? []).map((product) => product.toString()),
-    }));
-  }
+async function seedUsers(productIds: mongoose.Types.ObjectId[]): Promise<SeededUserSummary[]> {
+  const users = await loadSeedFile<UserSeed[]>("users.json");
+  const summaries: SeededUserSummary[] = [];
 
-  const payload = await Promise.all(
-    defaultUsers.map(async (user) => {
-      const hashed = await bcrypt.hash(user.password, 10);
-      return {
+  for (const user of users) {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const liked = (user.likedProducts ?? []).map((index) => productIds[index]).filter(Boolean);
+    const purchased = (user.purchaseHistory ?? []).map((index) => productIds[index]).filter(Boolean);
+    const viewed = (user.viewedProducts ?? []).map((index) => productIds[index]).filter(Boolean);
+
+    const upserted = await User.findOneAndUpdate(
+      { email: user.email },
+      {
         username: user.username,
         email: user.email,
-        password: hashed,
+        password: hashedPassword,
         bio: user.bio,
-        likedProducts: user.likedProducts.map((index) => productIds[index]).filter(Boolean),
-        purchaseHistory: user.purchaseHistory.map((index) => productIds[index]).filter(Boolean),
-        viewedProducts: [] as string[],
-      };
-    })
-  );
+        role: user.role ?? "user",
+        likedProducts: liked,
+        purchaseHistory: purchased,
+        viewedProducts: viewed,
+        notificationPreferences: {
+          productAlerts: user.notificationPreferences?.productAlerts ?? true,
+          orderUpdates: user.notificationPreferences?.orderUpdates ?? true
+        }
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
-  const inserted = await User.insertMany(payload);
-  return inserted.map((user) => ({
-    _id: (user._id as mongoose.Types.ObjectId).toString(),
-    likedProducts: user.likedProducts.map((product) => product.toString()),
-    purchaseHistory: user.purchaseHistory.map((product) => product.toString()),
-  }));
+    summaries.push({
+      _id: upserted._id as mongoose.Types.ObjectId,
+      likedProducts: liked,
+      purchaseHistory: purchased
+    });
+  }
+
+  return summaries;
 }
 
 async function seedInteractions(users: SeededUserSummary[]) {
-  const count = await Interaction.countDocuments();
-  if (count > 0) {
+  const existing = await Interaction.countDocuments();
+  if (existing > 0) {
     return;
   }
 
-  const interactions: Array<{ user: string; product: string; type: InteractionType }> = [];
-  users.forEach((user) => {
-    const liked = user.likedProducts ?? [];
-    const purchased = user.purchaseHistory ?? [];
-    liked.forEach((product) => interactions.push({ user: user._id, product, type: "like" }));
-    purchased.forEach((product) => interactions.push({ user: user._id, product, type: "purchase" }));
-  });
+  const interactions: Array<{ user: mongoose.Types.ObjectId; product: mongoose.Types.ObjectId; type: InteractionType }> = [];
 
-  if (interactions.length) {
+  for (const user of users) {
+    for (const product of user.likedProducts) {
+      interactions.push({ user: user._id, product, type: "like" });
+    }
+    for (const product of user.purchaseHistory) {
+      interactions.push({ user: user._id, product, type: "purchase" });
+    }
+  }
+
+  if (interactions.length > 0) {
     await Interaction.insertMany(interactions, { ordered: false });
   }
 }
