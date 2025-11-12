@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { seedDatabase } from "@/utils/seedData";
+import { appConfig } from "@/config/appConfig";
 
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/advanced-db-commerce";
 
@@ -35,10 +36,18 @@ export async function connectDatabase() {
   await mongoose.connection.db?.collection("interactions")?.createIndex({
     user: 1,
     product: 1,
-    type: 1
+    type: 1,
+    createdAt: -1
   });
 
-  await seedDatabase();
+  await mongoose.connection.db?.collection("orders")?.createIndex({
+    user: 1,
+    createdAt: -1
+  });
+
+  if (appConfig.autoSeed) {
+    await seedDatabase();
+  }
 
   return mongoose.connection;
 }

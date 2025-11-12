@@ -1,0 +1,42 @@
+[
+  {
+    "username": "ava",
+    "email": "ava@example.com",
+    "password": "Password123!",
+    "bio": "Product designer exploring the latest in smart home tech.",
+    "role": "admin",
+    "likedProducts": [0, 3, 5],
+    "purchaseHistory": [0, 2],
+    "viewedProducts": [0, 1, 2, 3],
+    "notificationPreferences": {
+      "productAlerts": true,
+      "orderUpdates": true
+    }
+  },
+  {
+    "username": "marco",
+    "email": "marco@example.com",
+    "password": "Password123!",
+    "bio": "Runner and coffee enthusiast always searching for performance gear.",
+    "likedProducts": [1, 2],
+    "purchaseHistory": [1],
+    "viewedProducts": [1, 2, 4],
+    "notificationPreferences": {
+      "productAlerts": true,
+      "orderUpdates": false
+    }
+  },
+  {
+    "username": "tanya",
+    "email": "tanya@example.com",
+    "password": "Password123!",
+    "bio": "Operations manager keeping the workspace modern and comfortable.",
+    "likedProducts": [3, 4],
+    "purchaseHistory": [4, 5],
+    "viewedProducts": [3, 4, 5],
+    "notificationPreferences": {
+      "productAlerts": false,
+      "orderUpdates": true
+    }
+  }
+]

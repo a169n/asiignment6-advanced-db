@@ -1,0 +1,68 @@
+[
+  {
+    "productName": "Aurora Noise-Cancelling Headphones",
+    "description": "Wireless over-ear headphones with adaptive noise cancellation and 30-hour battery life.",
+    "category": "Electronics",
+    "price": 199.99,
+    "tags": ["audio", "wireless", "premium"],
+    "imageUrl": "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
+    "imageAlt": "Matte black over-ear headphones resting on a wooden table",
+    "rating": 4.7,
+    "popularity": 350
+  },
+  {
+    "productName": "Summit Trail Running Shoes",
+    "description": "Lightweight trail runners designed for stability on uneven surfaces and wet conditions.",
+    "category": "Outdoors",
+    "price": 149.0,
+    "tags": ["footwear", "athletic", "water-resistant"],
+    "imageUrl": "https://images.unsplash.com/photo-1542293787938-4d2226c12e6e",
+    "imageAlt": "A pair of trail running shoes on a rocky surface",
+    "rating": 4.6,
+    "popularity": 275
+  },
+  {
+    "productName": "Harbor Pour-Over Coffee Maker",
+    "description": "Glass pour-over coffee maker with reusable stainless-steel filter for rich flavor extraction.",
+    "category": "Home",
+    "price": 59.5,
+    "tags": ["kitchen", "coffee", "eco-friendly"],
+    "imageUrl": "https://images.unsplash.com/photo-1503602642458-232111445657",
+    "imageAlt": "Pour-over coffee maker beside a steaming mug",
+    "rating": 4.4,
+    "popularity": 190
+  },
+  {
+    "productName": "Cascade Smart Water Bottle",
+    "description": "Insulated bottle that tracks hydration levels and syncs with your smartphone.",
+    "category": "Wellness",
+    "price": 89.99,
+    "tags": ["hydration", "smart", "health"],
+    "imageUrl": "https://images.unsplash.com/photo-1612810806695-30ba1b3c5d07",
+    "imageAlt": "Smart stainless steel water bottle on a yoga mat",
+    "rating": 4.2,
+    "popularity": 210
+  },
+  {
+    "productName": "Lumen Desk Lamp",
+    "description": "Adjustable LED desk lamp with ambient light sensor and wireless charging pad.",
+    "category": "Office",
+    "price": 129.99,
+    "tags": ["lighting", "smart", "workspace"],
+    "imageUrl": "https://images.unsplash.com/photo-1505691938895-1758d7feb511",
+    "imageAlt": "Modern LED desk lamp illuminating a workspace",
+    "rating": 4.8,
+    "popularity": 320
+  },
+  {
+    "productName": "Nebula Smart Home Hub",
+    "description": "Voice-controlled hub that unifies lighting, climate, and security devices with adaptive automations.",
+    "category": "Smart Home",
+    "price": 229.0,
+    "tags": ["automation", "assistant", "security"],
+    "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
+    "imageAlt": "Smart home hub glowing softly on a living room shelf",
+    "rating": 4.5,
+    "popularity": 295
+  }
+]

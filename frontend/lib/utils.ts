@@ -69,6 +69,12 @@ export const api = {
       method: "PUT",
       body: body !== undefined ? JSON.stringify(body) : options?.body
     }),
+  patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
+    request<T>(path, {
+      ...options,
+      method: "PATCH",
+      body: body !== undefined ? JSON.stringify(body) : options?.body
+    }),
   delete: <T>(path: string, options?: RequestInit) =>
     request<T>(path, { ...options, method: "DELETE" }),
   tokenStorageKey
