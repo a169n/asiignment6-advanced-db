@@ -5,6 +5,10 @@ yarn-error.log
 .pnp.loader.mjs
 .env
 backend/dist
+backend/artifacts
+backend/cypress/screenshots
+backend/cypress/videos
+backend/cypress/downloads
 frontend/.next
 frontend/out
 .DS_Store
