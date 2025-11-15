@@ -18,32 +18,34 @@ export interface ProductFilters {
 export async function findProducts(filters: ProductFilters) {
   const { q, category, minPrice, maxPrice, tags, page, limit, sort } = filters;
   const pipeline: PipelineStage[] = [];
-  const match: Record<string, any> = {};
 
+  // $text search must be in its own $match stage and cannot be combined with other fields
   if (q) {
-    match.$text = { $search: q };
+    pipeline.push({ $match: { $text: { $search: q } } });
   }
 
+  // Additional filters go in a separate $match stage
+  const additionalMatch: Record<string, any> = {};
   if (category) {
-    match.category = category;
+    additionalMatch.category = category;
   }
 
   if (typeof minPrice === "number" || typeof maxPrice === "number") {
-    match.price = {};
+    additionalMatch.price = {};
     if (typeof minPrice === "number") {
-      (match.price as Record<string, number>).$gte = minPrice;
+      (additionalMatch.price as Record<string, number>).$gte = minPrice;
     }
     if (typeof maxPrice === "number") {
-      (match.price as Record<string, number>).$lte = maxPrice;
+      (additionalMatch.price as Record<string, number>).$lte = maxPrice;
     }
   }
 
   if (tags?.length) {
-    match.tags = { $all: tags };
+    additionalMatch.tags = { $all: tags };
   }
 
-  if (Object.keys(match).length > 0) {
-    pipeline.push({ $match: match });
+  if (Object.keys(additionalMatch).length > 0) {
+    pipeline.push({ $match: additionalMatch });
   }
 
   const sortMode: ProductSort = sort || (q ? "relevance" : "newest");

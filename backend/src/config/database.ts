@@ -45,6 +45,10 @@ export async function connectDatabase() {
     createdAt: -1
   });
 
+  // Ensure unique indexes for users are created
+  await mongoose.connection.db?.collection("users")?.createIndex({ username: 1 }, { unique: true });
+  await mongoose.connection.db?.collection("users")?.createIndex({ email: 1 }, { unique: true });
+
   if (appConfig.autoSeed) {
     await seedDatabase();
   }

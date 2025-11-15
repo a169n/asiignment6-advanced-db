@@ -58,7 +58,7 @@ function createMarkdown(observations: AggregatedObservation[]) {
   return [header, separator, ...rows].join("\n");
 }
 
-function flush() {
+export function flush() {
   if (flushed || !registry.size) {
     return;
   }

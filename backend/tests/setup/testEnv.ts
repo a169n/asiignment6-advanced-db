@@ -4,6 +4,8 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import supertest from "supertest";
 import { createApp } from "@/app";
 import { connectDatabase } from "@/config/database";
+import { flush as flushTestCases } from "../utils/testCaseReporter";
+import { flush as flushApiObserver } from "../utils/apiObserver";
 
 let mongo: MongoMemoryServer | undefined;
 
@@ -31,6 +33,10 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
+  // Flush artifacts before cleanup
+  flushTestCases();
+  flushApiObserver();
+  
   await mongoose.disconnect();
   if (mongo) {
     await mongo.stop();

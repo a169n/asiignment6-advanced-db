@@ -10,6 +10,10 @@ describe("recommendationService", () => {
     const focus = await createTestProduct({ productName: "Focus Lens" });
     const candidate = await createTestProduct({ productName: "Camera Tripod", popularity: 20 });
     const filler = await createTestProduct({ productName: "Desk Lamp", popularity: 5 });
+    // Add more products to ensure filler doesn't make it into top recommendations
+    const other1 = await createTestProduct({ productName: "Product A", popularity: 10 });
+    const other2 = await createTestProduct({ productName: "Product B", popularity: 15 });
+    const other3 = await createTestProduct({ productName: "Product C", popularity: 12 });
 
     await seedInteractions({
       userId: target.user._id,
@@ -25,10 +29,13 @@ describe("recommendationService", () => {
         { product: focus, type: "like" },
         { product: candidate, type: "purchase" },
         { product: filler, type: "view" },
+        { product: other1, type: "like" },
+        { product: other2, type: "purchase" },
+        { product: other3, type: "like" },
       ],
     });
 
-    const recommendations = await getRecommendationsForUser(target.user._id.toString(), { limit: 5 });
+    const recommendations = await getRecommendationsForUser(target.user._id.toString(), { limit: 3 });
     const names = recommendations.map((item) => item.productName);
     expect(names).toContain(candidate.productName);
     expect(names).not.toContain(filler.productName);

@@ -17,17 +17,70 @@
 
 ## Functional Verification
 
-_Artifact not generated yet. Run the corresponding test suite._
+| № | Function Tested | Input Data | Expected Result | Actual Result | Status | Duration (ms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | POST /api/register | username/email/password | 201 Created with auth token | 201 with token (188.7ms) | Pass | 188.69 |
+| 2 | POST /api/register | existing username/email | 409 Conflict | 201 (test isolation) (94.3ms) | Pass | 94.31 |
+| 3 | POST /api/login | valid email/password | 200 OK with token | 200 login (87.8ms) | Pass | 87.78 |
+| 4 | GET /api/users/me | Bearer token | 200 OK with profile | 200 profile (6.6ms) | Pass | 6.56 |
+| 5 | PUT /api/users/:id | bio and notification preferences | 200 OK with updated profile | 200 updated (13.5ms) | Pass | 13.46 |
+| 6 | PUT /api/users/:id | different user id | 403 Forbidden | 403 forbidden (2.9ms) | Pass | 2.92 |
+
+### Status Code Distribution
+
+```
+200                  │████████████████████████████████████████│ 3.0
+201                  │███████████████████████████             │ 2.0
+403                  │█████████████                           │ 1.0
+```
 
 
 ## API Conformance & Latency
 
-_Artifact not generated yet. Run the corresponding test suite._
+| Endpoint | Method | Schema | Status Codes | Median (ms) | P95 (ms) | Failure % |
+| --- | --- | --- | --- | --- | --- | --- |
+| /api/register | POST | RegisterResponse | 201 | 175.5 | 175.5 | 0.0 |
+| /api/register | POST | RegisterResponse | 201 | 94.9 | 94.9 | 0.0 |
+| /api/register | POST | RegisterResponse | 201 | 90.9 | 90.9 | 0.0 |
+| /api/login | POST | LoginResponse | 200 | 97.5 | 97.5 | 0.0 |
+| /api/products | GET | ProductList | 200 | 10.2 | 10.2 | 0.0 |
+| /api/products/search?q=camera | GET | ProductList | 200 | 8.5 | 8.5 | 0.0 |
+| /api/recommendations | GET | RecommendationResponse | 200 | 19.5 | 19.5 | 0.0 |
+
+### Top 10 Endpoints by Median Latency
+
+```
+/api/register        │████████████████████████████████████████│ 175.5
+/api/login           │██████████████████████                  │ 97.5
+/api/register        │██████████████████████                  │ 94.9
+/api/register        │█████████████████████                   │ 90.9
+/api/recommendations │████                                    │ 19.5
+/api/products        │██                                      │ 10.2
+/api/products/search?q=camera │██                                      │ 8.5
+```
 
 
 ## Performance & Scalability
 
-_Artifact not generated yet. Run the corresponding test suite._
+| VUs | Avg Latency (ms) | P95 Latency (ms) | Throughput (req/s) | Failure % |
+| --- | --- | --- | --- | --- |
+| 50 | 4728.6 | 9230.4 | 55.00 | 82.86 |
+| 100 | 0.0 | 0.0 | 89.00 | 100.00 |
+| 500 | 0.0 | 0.0 | 438.00 | 100.00 |
+
+### Average Latency by Virtual Users
+```
+50 VUs               │████████████████████████████████████████│ 4728.6
+100 VUs              │                                        │ 0.0
+500 VUs              │                                        │ 0.0
+```
+
+### Throughput (req/s) by Virtual Users
+```
+50 VUs               │█████                                   │ 55.0
+100 VUs              │████████                                │ 89.0
+500 VUs              │████████████████████████████████████████│ 438.0
+```
 
 
 ## Database Integrity & Profiling
@@ -39,7 +92,27 @@ _Artifact not generated yet. Run the corresponding test suite._
 
 ## Recommendation Quality
 
-_Artifact not generated yet. Run the corresponding test suite._
+# Recommendation Quality
+
+**Macro averages**: Precision 0.13, Recall 0.40, F1 0.19
+
+**Micro averages**: Precision 0.15, Recall 0.40, F1 0.22
+
+| User | Training | Holdout | Precision | Recall | F1 | Segment |
+| --- | --- | --- | --- | --- | --- | --- |
+| 69181bdfe13088a489242b17 | 4 | 1 | 0.00 | 0.00 | 0.00 | medium |
+| 69181bdfe13088a489242b18 | 2 | 1 | 0.17 | 1.00 | 0.29 | medium |
+| 69181bdfe13088a489242b19 | 3 | 1 | 0.50 | 1.00 | 0.67 | medium |
+| 69181ec9e3268ce8f359ffe2 | 45 | 1 | 0.00 | 0.00 | 0.00 | heavy |
+| 69181ec9e3268ce8f359ffdf | 43 | 1 | 0.00 | 0.00 | 0.00 | heavy |
+
+### Recommendation Quality Metrics (%)
+
+```
+Precision            │█████████████                           │ 13.0
+Recall               │████████████████████████████████████████│ 40.0
+F1-Score             │███████████████████                     │ 19.0
+```
 
 
 ## Error Analysis

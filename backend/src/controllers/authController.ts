@@ -16,21 +16,35 @@ export const register = async (req: Request, res: Response) => {
     return res.status(409).json({ message: "User already exists" });
   }
 
-  const hashed = await bcrypt.hash(password, 10);
-  const user = await User.create({ username, email, password: hashed });
-  const token = jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: "7d" });
-  res.status(201).json({
-    token,
-    user: {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      bio: user.bio,
-      purchaseHistory: user.purchaseHistory,
-      likedProducts: user.likedProducts,
-      viewedProducts: user.viewedProducts
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ username, email, password: hashed });
+    const token = jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: "7d" });
+    res.status(201).json({
+      token,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        purchaseHistory: user.purchaseHistory,
+        likedProducts: user.likedProducts,
+        viewedProducts: user.viewedProducts
+      }
+    });
+  } catch (error: any) {
+    // Handle MongoDB duplicate key error (E11000)
+    // Check multiple ways the error might be structured
+    if (
+      error.code === 11000 ||
+      error.name === "MongoServerError" ||
+      error.name === "MongoError" ||
+      (error.message && error.message.includes("duplicate key"))
+    ) {
+      return res.status(409).json({ message: "User already exists" });
     }
-  });
+    throw error;
+  }
 };
 
 export const login = async (req: Request, res: Response) => {

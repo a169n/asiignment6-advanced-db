@@ -31,7 +31,7 @@ function formatMarkdownTable(entries: TestCaseResult[]) {
   return [header, separator, ...rows].join("\n");
 }
 
-function flush() {
+export function flush() {
   if (flushed || !results.length) {
     return;
   }

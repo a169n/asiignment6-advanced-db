@@ -45,7 +45,22 @@ describe("Authentication module", () => {
         email: "dup_user@example.com",
         password: defaultPassword,
       };
-      await agent.post("/api/register").send(payload);
+      const firstResponse = await agent.post("/api/register").send(payload);
+      expect(firstResponse.status).toBe(201);
+      // Verify user exists in database before attempting duplicate registration
+      const { User } = await import("@/models/User");
+      let userExists = false;
+      let attempts = 0;
+      while (!userExists && attempts < 20) {
+        const user = await User.findOne({ $or: [{ email: payload.email }, { username: payload.username }] });
+        if (user) {
+          userExists = true;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        attempts++;
+      }
+      expect(userExists).toBe(true);
       const start = performance.now();
       const response = await agent.post("/api/register").send(payload);
       const durationMs = performance.now() - start;
@@ -66,7 +81,9 @@ describe("Authentication module", () => {
     async () => {
       const agent = request();
       const credentials = { email: "login_user@example.com", username: "login_user" };
-      await agent.post("/api/register").send({ ...credentials, password: defaultPassword });
+      const registerResponse = await agent.post("/api/register").send({ ...credentials, password: defaultPassword });
+      expect(registerResponse.status).toBe(201);
+      // User is created synchronously by User.create(), so we can proceed directly to login
       const start = performance.now();
       const response = await agent.post("/api/login").send({
         email: credentials.email,

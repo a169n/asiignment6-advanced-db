@@ -54,11 +54,32 @@ export async function createInteraction(params: {
 
 export async function authenticateTestUser(options: { email?: string; username?: string; password?: string } = {}) {
   const agent = request();
-  const email = options.email || `auth_${Date.now()}@example.com`;
-  const username = options.username || `auth_user_${Date.now()}`;
+  // Use a more unique identifier to avoid conflicts
+  const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  const email = options.email || `auth_${uniqueId}@example.com`;
+  const username = options.username || `auth_user_${uniqueId}`;
   const password = options.password || defaultPassword;
-  await agent.post("/api/register").send({ username, email, password });
+  const registerResponse = await agent.post("/api/register").send({ username, email, password });
+  if (registerResponse.status !== 201) {
+    throw new Error(`Registration failed: ${registerResponse.status} - ${JSON.stringify(registerResponse.body)}`);
+  }
+  // Use token from registration if available, otherwise login
+  if (registerResponse.body.token && registerResponse.body.user?._id) {
+    return {
+      token: registerResponse.body.token as string,
+      userId: registerResponse.body.user._id as string,
+      credentials: { email, password },
+    };
+  }
+  // Fallback to login if token not in registration response
+  await new Promise((resolve) => setTimeout(resolve, 50));
   const loginResponse = await agent.post("/api/login").send({ email, password });
+  if (loginResponse.status !== 200) {
+    throw new Error(`Login failed: ${loginResponse.status} - ${JSON.stringify(loginResponse.body)}`);
+  }
+  if (!loginResponse.body.user || !loginResponse.body.user._id) {
+    throw new Error(`Login response missing user data: ${JSON.stringify(loginResponse.body)}`);
+  }
   const token = loginResponse.body.token as string;
   const userId = loginResponse.body.user._id as string;
   return { token, userId, credentials: { email, password } };
