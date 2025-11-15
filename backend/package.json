@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test:unit": "vitest run --dir tests/unit --config vitest.config.ts",
+    "test:api": "vitest run --dir tests/functional --dir tests/api --config vitest.config.ts",
+    "test:e2e": "cypress run",
+    "test:load": "tsx tests/load/run-load-tests.ts",
+    "test:reco": "tsx tests/recommendations/run-metrics.ts",
+    "report:final": "tsx tests/report/build-final-report.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -26,10 +32,18 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/morgan": "^1.9.7",
     "@types/node": "^20.11.0",
+    "@types/supertest": "^2.0.16",
+    "artillery": "^2.0.0-38",
+    "autocannon": "^7.14.0",
+    "cypress": "^13.7.0",
+    "mongodb-memory-server": "^9.0.0",
     "prettier": "^3.1.0",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.6.2",
     "tsx": "^4.6.2",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^1.5.0",
+    "zod": "^3.22.4"
   }
 }
